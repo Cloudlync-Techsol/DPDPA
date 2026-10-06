@@ -1,0 +1,1865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js">
+function excelRows(){
+  const rows=[["S.No","Section","Discovery Question","Customer Response","Evidence / Remarks","Compliance Status"]];
+  document.querySelectorAll(".section[data-section]").forEach(section=>{
+    const sec=section.getAttribute("data-section")||"";
+    section.querySelectorAll(".question-card").forEach(card=>{
+      const num=(card.querySelector(".qnum")?.textContent||"").trim();
+      const question=(card.querySelector(".qtext")?.textContent||"").trim();
+      const response=card.querySelector('[name$="_response"]')?.value||"";
+      const evidence=card.querySelector('[name$="_evidence"]')?.value||"";
+      const status=card.querySelector('[name$="_status"]')?.value||"";
+      rows.push([num,sec,question,response,evidence,status]);
+    });
+  });
+  return rows;
+}
+function exportExcel(){
+  if(typeof XLSX==="undefined"){
+    alert("Excel export library could not be loaded. Please connect to the internet and reopen this HTML file, then try again.");
+    return;
+  }
+  const wb=XLSX.utils.book_new();
+  const meta=[
+    ["DPDPA Customer Discovery & Readiness Questionnaire"],
+    ["Organization",document.getElementById("org").value||""],
+    ["Primary Contact",document.getElementById("contact").value||""],
+    ["Assessor / Consultant",document.getElementById("assessor").value||""],
+    ["Assessment Date",document.getElementById("date").value||""],
+    [],
+  ];
+  const data=meta.concat(excelRows());
+  const ws=XLSX.utils.aoa_to_sheet(data);
+  ws["!cols"]=[{wch:8},{wch:38},{wch:85},{wch:28},{wch:45},{wch:24}];
+  XLSX.utils.book_append_sheet(wb,ws,"DPDPA Discovery");
+
+  const decl=[
+    ["Customer Declaration"],
+    ["Organization Name",document.querySelector('[name="decl_org"]')?.value||""],
+    ["Authorized Representative",document.querySelector('[name="decl_rep"]')?.value||""],
+    ["Designation",document.querySelector('[name="decl_designation"]')?.value||""],
+    ["Date",document.querySelector('[name="decl_date"]')?.value||""],
+    ["Declaration Acknowledged",document.getElementById("legalAck")?.checked?"Yes":"No"],
+    [],
+    ["Disclaimer"],
+    ["This workbook was generated from the Cloudlync DPDPA Customer Discovery & Readiness Questionnaire. Completion or assessment does not by itself constitute legal advice, legal certification, regulatory approval, or a guarantee of compliance."]
+  ];
+  const ws2=XLSX.utils.aoa_to_sheet(decl);
+  ws2["!cols"]=[{wch:32},{wch:100}];
+  XLSX.utils.book_append_sheet(wb,ws2,"Declaration");
+
+  const orgName=(document.getElementById("org").value||"Customer").replace(/[^a-z0-9_-]+/gi,"_");
+  XLSX.writeFile(wb,orgName+"_DPDPA_Discovery_Assessment.xlsx");
+}
+function emailFile(){
+  document.getElementById("emailModal").classList.add("open");
+}
+function closeEmailModal(){
+  document.getElementById("emailModal").classList.remove("open");
+}
+function openEmail(){
+  const orgName=document.getElementById("org").value||"Customer";
+  const subject=encodeURIComponent("DPDPA Discovery Assessment - "+orgName);
+  const body=encodeURIComponent(
+    "Dear Perumal,\n\nPlease find attached the completed DPDPA Customer Discovery & Readiness Questionnaire for "+orgName+".\n\nRegards"
+  );
+  window.location.href="mailto:perumal@cloudlyncsol.com?subject="+subject+"&body="+body;
+}
+
+</script>
+<title>DPDPA Customer Discovery & Readiness Questionnaire</title>
+<style>
+:root{--navy:#103a5d;--blue:#176ca4;--sky:#eaf5fb;--orange:#f59e0b;--ink:#1f2937;--muted:#667085;--line:#dbe5ec;--bg:#f5f8fb;}
+*{box-sizing:border-box} body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink)}
+.hero{background:linear-gradient(120deg,var(--navy),var(--blue));color:white;padding:34px 24px}
+.wrap{max-width:1180px;margin:auto} .brand{font-size:13px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#d9efff}
+h1{font-size:30px;margin:8px 0 7px} .subtitle{max-width:850px;line-height:1.55;color:#e7f4fb}
+.meta{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:22px}
+.meta input{width:100%;padding:11px;border:1px solid rgba(255,255,255,.35);border-radius:8px;background:rgba(255,255,255,.12);color:white}
+.meta input::placeholder{color:#dbeafe}
+.toolbar{position:sticky;top:0;z-index:10;background:white;border-bottom:1px solid var(--line);box-shadow:0 2px 8px #0000000d}
+.toolbar .wrap{display:flex;gap:10px;align-items:center;padding:11px 20px}
+button{border:0;border-radius:7px;padding:10px 14px;font-weight:700;cursor:pointer}
+.primary{background:var(--blue);color:white} .secondary{background:#edf3f7;color:var(--navy)}
+.progress{margin-left:auto;font-size:13px;color:var(--muted)} main.wrap{padding:25px 20px 50px}
+.notice{background:#fff7e8;border-left:4px solid var(--orange);padding:14px 16px;border-radius:6px;margin-bottom:22px;line-height:1.5}
+.section{background:white;border:1px solid var(--line);border-radius:12px;margin:0 0 20px;overflow:hidden}
+.section-title{background:var(--sky);padding:16px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line)}
+.section-title h2{font-size:18px;color:var(--navy);margin:0} .section-title span{font-size:12px;color:var(--muted)}
+.question-card{padding:17px 20px;border-bottom:1px solid #edf1f4} .question-card:last-child{border-bottom:0}
+.qhead{display:flex;gap:12px;align-items:flex-start} .qnum{min-width:38px;background:var(--navy);color:white;border-radius:5px;padding:5px 6px;text-align:center;font-size:11px;font-weight:700}
+.qtext{font-weight:700;line-height:1.45;padding-top:2px}
+.fields{display:grid;grid-template-columns:1.05fr 1.35fr .75fr;gap:12px;margin:13px 0 0 50px}
+.field label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.3px}
+textarea,select{width:100%;border:1px solid #cfdbe4;border-radius:7px;padding:9px;background:white;font:inherit;color:var(--ink)}
+textarea{resize:vertical;min-height:42px} select{height:42px}
+.footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
+@media(max-width:800px){.meta{grid-template-columns:1fr 1fr}.fields{grid-template-columns:1fr;margin-left:0}h1{font-size:24px}}
+@media print{.toolbar{display:none}body{background:white}.hero{background:white;color:#111;border-bottom:2px solid #222}.brand,.subtitle{color:#333}.meta input{color:#111;border:1px solid #aaa;background:white}.section{break-inside:avoid}main.wrap{padding-top:15px}}
+
+.legal-content{padding:20px;line-height:1.65;color:var(--ink)}
+.legal-content p{margin:0 0 12px}
+.declaration-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:20px;padding-top:18px;border-top:1px solid var(--line)}
+.declaration-grid input{width:100%;height:42px;border:1px solid #cfdbe4;border-radius:7px;padding:9px;font:inherit;color:var(--ink);background:white}
+.disclaimer-box{background:#fffdf7}
+.acknowledgement{display:flex;gap:12px;align-items:flex-start;margin-top:20px;padding:16px;border:1px solid #f0d7a1;background:#fff7e8;border-radius:8px;cursor:pointer}
+.acknowledgement input{width:18px;height:18px;margin-top:2px;accent-color:var(--blue);flex:0 0 auto}
+.acknowledgement span{font-size:13px;line-height:1.55}
+@media(max-width:800px){.declaration-grid{grid-template-columns:1fr}}
+
+
+.email-modal{display:none;position:fixed;inset:0;background:rgba(16,58,93,.45);z-index:1000;align-items:center;justify-content:center;padding:20px}
+.email-modal.open{display:flex}
+.email-card{width:min(560px,100%);background:white;border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,.2);overflow:hidden}
+.email-card-head{background:var(--navy);color:white;padding:16px 20px;font-weight:700}
+.email-card-body{padding:20px;line-height:1.55}
+.email-card-body code{background:#eef4f8;padding:2px 5px;border-radius:4px}
+.email-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.email-note{font-size:12px;color:var(--muted);margin-top:12px}
+
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <div class="brand">Cloudlync Techsol Pvt. Ltd.</div>
+  <h1>DPDPA Customer Discovery & Readiness Questionnaire</h1>
+  <div class="subtitle">Customer discovery and readiness assessment aligned to the Government of India Digital Personal Data Protection Act, 2023 and Digital Personal Data Protection Rules, 2025.</div>
+  <div class="meta">
+    <input id="org" placeholder="Organization Name">
+    <input id="contact" placeholder="Primary Contact">
+    <input id="assessor" placeholder="Assessor / Consultant">
+    <input id="date" type="date">
+  </div>
+</div></header>
+<div class="toolbar"><div class="wrap">
+  <button class="primary" onclick="window.print()">Print / Save PDF</button>
+  <button class="primary" onclick="exportExcel()">Save as Excel</button>
+  <button class="secondary" onclick="emailFile()">Email the File</button>
+  <button class="secondary" onclick="saveLocal()">Save Progress</button>
+  <button class="secondary" onclick="loadLocal()">Restore</button>
+  <button class="secondary" onclick="clearForm()">Clear</button>
+  <div class="progress" id="progress">0 / 110 answered</div>
+</div></div>
+<main class="wrap">
+<div class="notice"><strong>Assessment guidance:</strong> Use <b>Compliant / Partially Compliant / Non-Compliant / Not Applicable / Not Assessed</b> for readiness assessment. Capture supporting documents or observations under Evidence / Remarks. Conditional sections such as children's data and Significant Data Fiduciary obligations should be completed only where applicable.</div>
+<form id="dpdpForm">
+
+    <section class="section" data-section="A. Applicability &amp; Data Fiduciary Identification">
+      <div class="section-title"><h2>A. Applicability &amp; Data Fiduciary Identification</h2><span>7 questions</span></div>
+      
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">001</span><div class="qtext">Does your organization collect, store, use, share or otherwise process digital personal data relating to individuals?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q1_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q1_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q1_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">002</span><div class="qtext">What categories of Data Principals are covered? Customers / Employees / Applicants / Vendors / Partners / Visitors / Others</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><textarea name="q2_response" rows="2" placeholder="Enter customer response"></textarea></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q2_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q2_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">003</span><div class="qtext">Does the organization determine the purpose and means for processing such personal data and therefore operate as a Data Fiduciary?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q3_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q3_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q3_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">004</span><div class="qtext">Does the organization engage any third party/Data Processor to process personal data on its behalf?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q4_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q4_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q4_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">005</span><div class="qtext">Is any personal data collected in non-digital form and subsequently digitised?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q5_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q5_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q5_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">006</span><div class="qtext">Does the organization process personal data outside India in connection with offering goods or services to Data Principals within India?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q6_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q6_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q6_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">007</span><div class="qtext">Has the organization mapped which business entities, subsidiaries or business units act as Data Fiduciaries/Data Processors?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q7_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q7_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q7_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+    </section>
+    <section class="section" data-section="B. Personal Data Inventory &amp; Processing Purpose">
+      <div class="section-title"><h2>B. Personal Data Inventory &amp; Processing Purpose</h2><span>8 questions</span></div>
+      
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">008</span><div class="qtext">What personal data is collected by each department/business function?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><textarea name="q8_response" rows="2" placeholder="Enter customer response"></textarea></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q8_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q8_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">009</span><div class="qtext">From whom is the personal data collected?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><textarea name="q9_response" rows="2" placeholder="Enter customer response"></textarea></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q9_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q9_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">010</span><div class="qtext">Through which channels is personal data collected—website, mobile application, forms, email, call centre, CCTV, HRMS, CRM, ERP, APIs, etc.?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><textarea name="q10_response" rows="2" placeholder="Enter customer response"></textarea></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q10_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q10_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">011</span><div class="qtext">For what specific purpose is each category of personal data processed?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><textarea name="q11_response" rows="2" placeholder="Enter customer response"></textarea></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q11_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q11_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">012</span><div class="qtext">Is each processing activity linked to a documented lawful purpose?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q12_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q12_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q12_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">013</span><div class="qtext">Is a central inventory/register of personal data and processing activities maintained?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q13_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q13_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q13_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">014</span><div class="qtext">Are data flows documented from collection → processing → sharing → storage → deletion?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q14_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q14_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q14_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">015</span><div class="qtext">Can the organization identify all systems/applications/databases where personal data resides?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q15_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q15_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q15_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+    </section>
+    <section class="section" data-section="C. Notice to Data Principal">
+      <div class="section-title"><h2>C. Notice to Data Principal</h2><span>8 questions</span></div>
+      
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">016</span><div class="qtext">Is a privacy/data processing notice provided to Data Principals?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q16_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q16_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q16_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">017</span><div class="qtext">Does the notice clearly identify the personal data being processed?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q17_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q17_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q17_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">018</span><div class="qtext">Does the notice clearly explain the specific purpose(s) of processing?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q18_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q18_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q18_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">019</span><div class="qtext">Is the notice presented in clear and plain language and understandable independently of other information?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q19_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q19_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q19_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">020</span><div class="qtext">Does the notice provide a mechanism/link through which the Data Principal can withdraw consent?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q20_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q20_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q20_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">021</span><div class="qtext">Does the notice explain how Data Principals can exercise their rights?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q21_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q21_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q21_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">022</span><div class="qtext">Does the notice provide a mechanism for making complaints?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q22_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q22_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q22_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">023</span><div class="qtext">Have existing/legacy privacy notices been reviewed against the DPDP requirements?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q23_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q23_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q23_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+    </section>
+    <section class="section" data-section="D. Consent Management">
+      <div class="section-title"><h2>D. Consent Management</h2><span>10 questions</span></div>
+      
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">024</span><div class="qtext">For processing based on consent, is consent obtained before processing the personal data?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q24_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q24_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q24_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">025</span><div class="qtext">Is consent free, specific, informed, unconditional and unambiguous?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q25_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q25_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q25_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">026</span><div class="qtext">Is consent obtained through clear affirmative action?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q26_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q26_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q26_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">027</span><div class="qtext">Can the organization demonstrate/evidence when and how consent was obtained?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q27_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q27_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q27_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">028</span><div class="qtext">Is consent linked to the specific purpose for which personal data is processed?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q28_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q28_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q28_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">029</span><div class="qtext">Can a Data Principal withdraw consent as easily as it was given?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q29_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q29_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q29_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">030</span><div class="qtext">Is processing stopped where required after consent is withdrawn?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q30_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q30_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q30_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">031</span><div class="qtext">Are Data Processors/third parties informed or controlled appropriately when consent is withdrawn?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q31_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q31_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q31_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">032</span><div class="qtext">Is there a centralized mechanism/platform for managing consent?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q32_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q32_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q32_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">033</span><div class="qtext">Does the organization use or intend to use a registered Consent Manager?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q33_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q33_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q33_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+    </section>
+    <section class="section" data-section="E. Certain Legitimate Uses">
+      <div class="section-title"><h2>E. Certain Legitimate Uses</h2><span>5 questions</span></div>
+      
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">034</span><div class="qtext">Does the organization process personal data without consent under any permitted &#x27;certain legitimate use&#x27; under the Act?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q34_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q34_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q34_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">035</span><div class="qtext">Has the applicable legitimate-use provision been identified and documented for each such processing activity?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q35_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q35_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q35_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">036</span><div class="qtext">Is evidence maintained to demonstrate why the processing qualifies for that provision?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q36_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q36_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q36_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">037</span><div class="qtext">Is employee personal data processed for employment-related purposes?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q37_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q37_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q37_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">038</span><div class="qtext">Are emergency, medical, legal or government-related processing activities separately identified where applicable?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q38_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q38_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q38_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+    </section>
+    <section class="section" data-section="F. Data Principal Rights">
+      <div class="section-title"><h2>F. Data Principal Rights</h2><span>8 questions</span></div>
+      
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">039</span><div class="qtext">Is there a mechanism for Data Principals to request information about processing of their personal data?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q39_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q39_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q39_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">040</span><div class="qtext">Can the organization provide the required information concerning personal data and processing when applicable?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q40_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q40_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q40_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">041</span><div class="qtext">Can Data Principals request correction of inaccurate or misleading personal data?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q41_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q41_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q41_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">042</span><div class="qtext">Can incomplete personal data be completed and personal data be updated?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q42_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q42_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q42_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">043</span><div class="qtext">Can Data Principals request erasure of their personal data where applicable?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q43_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q43_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q43_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">044</span><div class="qtext">Is there a mechanism for grievance redressal?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q44_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q44_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q44_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">045</span><div class="qtext">Can a Data Principal nominate another individual to exercise rights in the event of death or incapacity?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q45_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q45_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q45_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">046</span><div class="qtext">Are requests recorded, assigned, tracked and closed with evidence?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q46_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q46_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q46_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+    </section>
+    <section class="section" data-section="G. Data Retention &amp; Erasure">
+      <div class="section-title"><h2>G. Data Retention &amp; Erasure</h2><span>6 questions</span></div>
+      
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">047</span><div class="qtext">Are retention periods defined for different categories of personal data?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q47_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q47_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q47_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">048</span><div class="qtext">Is personal data erased when consent is withdrawn where retention is no longer necessary or legally required?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q48_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q48_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q48_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">049</span><div class="qtext">Is personal data erased when the specified purpose is no longer being served, subject to applicable legal requirements?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q49_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q49_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q49_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">050</span><div class="qtext">Can deletion/erasure be executed across applications, databases and relevant processors?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q50_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q50_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q50_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">051</span><div class="qtext">Are applicable retention requirements for processing records/logs identified?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q51_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q51_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q51_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">052</span><div class="qtext">Is evidence of deletion/erasure maintained?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q52_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q52_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q52_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+    </section>
+    <section class="section" data-section="H. Data Processors &amp; Third Parties">
+      <div class="section-title"><h2>H. Data Processors &amp; Third Parties</h2><span>8 questions</span></div>
+      
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">053</span><div class="qtext">Is there a complete inventory of Data Processors/vendors processing personal data?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q53_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q53_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q53_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">054</span><div class="qtext">Is personal data shared with cloud, SaaS, payroll, CRM, marketing, support or other service providers?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q54_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q54_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q54_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">055</span><div class="qtext">Are Data Processors engaged under valid contracts?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q55_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q55_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q55_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">056</span><div class="qtext">Do applicable contracts include appropriate personal-data security obligations?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q56_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q56_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q56_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">057</span><div class="qtext">Is vendor privacy/security due diligence conducted before onboarding?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q57_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q57_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q57_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">058</span><div class="qtext">Are processors periodically reviewed for compliance/security?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q58_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q58_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q58_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">059</span><div class="qtext">Can the organization identify which processor holds which personal data?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q59_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q59_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q59_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">060</span><div class="qtext">Is personal data deleted/returned by processors when no longer required?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q60_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q60_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q60_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+    </section>
+    <section class="section" data-section="I. Reasonable Security Safeguards">
+      <div class="section-title"><h2>I. Reasonable Security Safeguards</h2><span>10 questions</span></div>
+      
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">061</span><div class="qtext">Are appropriate safeguards such as encryption, obfuscation, masking or virtual tokens used to protect personal data?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q61_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q61_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q61_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">062</span><div class="qtext">Are appropriate access controls implemented for computer resources containing personal data?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q62_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q62_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q62_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">063</span><div class="qtext">Are access and activities relating to personal data appropriately logged?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q63_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q63_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q63_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">064</span><div class="qtext">Are logs monitored/reviewed to detect unauthorized access?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q64_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q64_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q64_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">065</span><div class="qtext">Are mechanisms available to investigate unauthorized access/security incidents?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q65_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q65_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q65_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">066</span><div class="qtext">Are corrective measures implemented to prevent recurrence?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q66_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q66_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q66_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">067</span><div class="qtext">Are backup/recovery measures implemented to protect the confidentiality, integrity and availability of personal data?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q67_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q67_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q67_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">068</span><div class="qtext">Are appropriate technical and organizational measures implemented to ensure effective observance of safeguards?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q68_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q68_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q68_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">069</span><div class="qtext">Are appropriate security requirements contractually imposed on applicable Data Processors?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q69_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q69_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q69_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">070</span><div class="qtext">Are the required logs and relevant personal data retained for the prescribed period where applicable?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q70_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q70_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q70_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+    </section>
+    <section class="section" data-section="J. Personal Data Breach Management">
+      <div class="section-title"><h2>J. Personal Data Breach Management</h2><span>10 questions</span></div>
+      
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">071</span><div class="qtext">Does the organization have a documented Personal Data Breach Response Procedure?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q71_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q71_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q71_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">072</span><div class="qtext">Can the organization detect when personal data has been compromised?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q72_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q72_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q72_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">073</span><div class="qtext">Can affected Data Principals be identified following a breach?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q73_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q73_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q73_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">074</span><div class="qtext">Is there a mechanism to notify affected Data Principals without delay as required?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q74_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q74_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q74_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">075</span><div class="qtext">Can the notification describe the nature, extent and timing of the breach?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q75_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q75_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q75_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">076</span><div class="qtext">Can the organization communicate likely consequences and mitigation measures to affected Data Principals?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q76_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q76_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q76_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">077</span><div class="qtext">Is there a defined process to notify the Data Protection Board of India?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q77_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q77_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q77_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">078</span><div class="qtext">Can an initial breach notification to the Board be made without delay?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q78_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q78_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q78_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">079</span><div class="qtext">Is there a process to provide the prescribed detailed information to the Board within the applicable timeframe?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q79_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q79_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q79_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">080</span><div class="qtext">Are breach root cause, corrective actions and recurrence-prevention measures documented?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q80_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q80_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q80_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+    </section>
+    <section class="section" data-section="K. Children&#x27;s Personal Data">
+      <div class="section-title"><h2>K. Children&#x27;s Personal Data</h2><span>7 questions</span></div>
+      
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">081</span><div class="qtext">Does the organization process personal data relating to children below 18 years?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q81_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q81_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q81_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">082</span><div class="qtext">How does the organization identify whether a Data Principal is a child?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><textarea name="q82_response" rows="2" placeholder="Enter customer response"></textarea></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q82_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q82_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">083</span><div class="qtext">Is verifiable consent of the parent/lawful guardian obtained before applicable processing?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q83_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q83_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q83_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">084</span><div class="qtext">Is appropriate due diligence performed to verify that the person representing themselves as the parent is an adult?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q84_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q84_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q84_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">085</span><div class="qtext">Does the organization undertake tracking or behavioural monitoring of children?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q85_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q85_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q85_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">086</span><div class="qtext">Is targeted advertising directed at children?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q86_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q86_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q86_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">087</span><div class="qtext">Has the organization assessed whether any statutory/rule-based exemption applicable to children&#x27;s data processing applies?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q87_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q87_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q87_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+    </section>
+    <section class="section" data-section="L. Grievance &amp; Contact Mechanism">
+      <div class="section-title"><h2>L. Grievance &amp; Contact Mechanism</h2><span>5 questions</span></div>
+      
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">088</span><div class="qtext">Has a person been designated to answer questions relating to processing of personal data?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q88_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q88_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q88_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">089</span><div class="qtext">Are that person&#x27;s/DPO&#x27;s business contact details prominently published on the website/app where applicable?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q89_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q89_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q89_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">090</span><div class="qtext">Are those contact details included in communications concerning exercise of Data Principal rights?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q90_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q90_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q90_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">091</span><div class="qtext">Is there a defined grievance-redressal process?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q91_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q91_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q91_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">092</span><div class="qtext">Are grievances tracked through resolution?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q92_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q92_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q92_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+    </section>
+    <section class="section" data-section="M. Significant Data Fiduciary – Applicability Check">
+      <div class="section-title"><h2>M. Significant Data Fiduciary – Applicability Check</h2><span>6 questions</span></div>
+      
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">093</span><div class="qtext">Has the organization been notified/designated as a Significant Data Fiduciary (SDF)?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q93_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q93_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q93_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">094</span><div class="qtext">If yes, has a Data Protection Officer based in India been appointed?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q94_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q94_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q94_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">095</span><div class="qtext">Is an independent data auditor appointed where required?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q95_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q95_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q95_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">096</span><div class="qtext">Are periodic Data Protection Impact Assessments conducted?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q96_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q96_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q96_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">097</span><div class="qtext">Are periodic audits conducted?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q97_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q97_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q97_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">098</span><div class="qtext">Are additional obligations applicable to the SDF identified and implemented?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q98_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q98_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q98_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+    </section>
+    <section class="section" data-section="N. Transfer / Processing Outside India">
+      <div class="section-title"><h2>N. Transfer / Processing Outside India</h2><span>5 questions</span></div>
+      
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">099</span><div class="qtext">Is personal data stored, processed or accessed outside India?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q99_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q99_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q99_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">100</span><div class="qtext">Which countries are involved?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><textarea name="q100_response" rows="2" placeholder="Enter customer response"></textarea></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q100_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q100_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">101</span><div class="qtext">Which cloud/SaaS/Data Processors process the data outside India?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q101_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q101_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q101_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">102</span><div class="qtext">Are cross-border data flows documented?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q102_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q102_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q102_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">103</span><div class="qtext">Has the organization assessed applicable Central Government restrictions/requirements concerning transfers outside India?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q103_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q103_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q103_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+    </section>
+    <section class="section" data-section="O. Governance &amp; Compliance Readiness">
+      <div class="section-title"><h2>O. Governance &amp; Compliance Readiness</h2><span>7 questions</span></div>
+      
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">104</span><div class="qtext">Who is accountable for DPDP compliance within the organization?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><textarea name="q104_response" rows="2" placeholder="Enter customer response"></textarea></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q104_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q104_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">105</span><div class="qtext">Has a formal DPDP implementation/readiness program been initiated?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q105_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q105_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q105_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">106</span><div class="qtext">Are privacy policies and procedures documented?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q106_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q106_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q106_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">107</span><div class="qtext">Have employees handling personal data received appropriate awareness/training?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q107_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q107_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q107_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">108</span><div class="qtext">Is evidence of DPDP compliance maintained?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q108_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q108_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q108_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">109</span><div class="qtext">Are privacy/data protection controls periodically reviewed?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q109_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q109_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q109_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="question-card">
+          <div class="qhead"><span class="qnum">110</span><div class="qtext">Have gaps between current practices and the DPDP Act/Rules been formally assessed?</div></div>
+          <div class="fields">
+            <div class="field response"><label>Customer Response</label><select name="q110_response">
+                <option value="">Select</option>
+                <option>Yes</option><option>Partially</option><option>No</option>
+                <option>Not Applicable</option><option>Not Sure</option>
+            </select></div>
+            <div class="field"><label>Evidence / Remarks</label><textarea name="q110_evidence" rows="2" placeholder="Document, evidence or observation"></textarea></div>
+            <div class="field small"><label>Compliance Status</label>
+              <select name="q110_status"><option value="">Select</option><option>Compliant</option><option>Partially Compliant</option><option>Non-Compliant</option><option>Not Applicable</option><option>Not Assessed</option></select>
+            </div>
+          </div>
+        </div>
+    </section>
+</form>
+
+<section class="section declaration-section">
+  <div class="section-title"><h2>Customer Declaration</h2><span>Confirmation</span></div>
+  <div class="legal-content">
+    <p>We confirm that the information provided in this questionnaire is, to the best of our knowledge, accurate and complete as on the date of submission.</p>
+    <p>We understand that the information and supporting documents shared will be used by <strong>Cloudlync Techsol Pvt. Ltd.</strong> for the purpose of DPDPA discovery, readiness/gap assessment, scope identification and preparation of recommendations or an implementation roadmap.</p>
+    <p>We acknowledge that any assessment, observations or recommendations will be based on the information, documents and evidence made available during the assessment.</p>
+    <div class="declaration-grid">
+      <div class="field"><label>Organization Name</label><input type="text" name="decl_org" placeholder="Organization Name"></div>
+      <div class="field"><label>Authorized Representative</label><input type="text" name="decl_rep" placeholder="Full Name"></div>
+      <div class="field"><label>Designation</label><input type="text" name="decl_designation" placeholder="Designation"></div>
+      <div class="field"><label>Date</label><input type="date" name="decl_date"></div>
+    </div>
+  </div>
+</section>
+
+<section class="section disclaimer-section">
+  <div class="section-title"><h2>Disclaimer</h2><span>Important Information</span></div>
+  <div class="legal-content disclaimer-box">
+    <p>This questionnaire has been prepared by <strong>Cloudlync Techsol Pvt. Ltd.</strong> as a discovery and readiness-assessment aid with reference to the <strong>Digital Personal Data Protection Act, 2023</strong>, the <strong>Digital Personal Data Protection Rules, 2025</strong>, and other applicable Government of India notifications/guidance available at the time of assessment.</p>
+    <p>The questionnaire is intended to assist in identifying personal-data processing activities, potential compliance gaps, security requirements and areas requiring further assessment or remediation.</p>
+    <p>Completion of this questionnaire, or any assessment performed using it, <strong>does not by itself constitute legal advice, legal certification, regulatory approval or a guarantee of compliance with the DPDP Act or Rules.</strong></p>
+    <p>Assessment findings and recommendations are dependent upon the accuracy and completeness of information, documents, systems and evidence provided by the customer. The organization remains responsible for determining and fulfilling its statutory and regulatory obligations. Where necessary, appropriate legal counsel should be consulted for interpretation of legal requirements.</p>
+    <p>Applicable laws, rules, notifications and regulatory guidance may be amended or updated from time to time. Any compliance program should therefore be periodically reviewed against the latest applicable requirements.</p>
+    <label class="acknowledgement">
+      <input type="checkbox" id="legalAck" name="legal_ack" required>
+      <span><strong>Declaration &amp; Acknowledgement:</strong> I confirm that I am authorized to provide this information on behalf of the organization and acknowledge the above Declaration and Disclaimer.</span>
+    </label>
+  </div>
+</section>
+
+</main>
+
+<div class="email-modal" id="emailModal" role="dialog" aria-modal="true" aria-labelledby="emailTitle">
+  <div class="email-card">
+    <div class="email-card-head" id="emailTitle">Email Completed Questionnaire</div>
+    <div class="email-card-body">
+      <p>The completed questionnaire is intended for <strong>perumal@cloudlyncsol.com</strong>.</p>
+      <p>For security reasons, a standalone browser page cannot automatically attach a locally generated Excel file to your email application. Use the buttons below:</p>
+      <div class="email-actions">
+        <button class="primary" onclick="exportExcel()">1. Download Excel</button>
+        <button class="primary" onclick="openEmail()">2. Open Email</button>
+        <button class="secondary" onclick="closeEmailModal()">Close</button>
+      </div>
+      <div class="email-note">Attach the downloaded Excel file to the prepared email before sending.</div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">Cloudlync Techsol Pvt. Ltd. • DPDPA Discovery & Readiness Assessment</div>
+<script>
+const form=document.getElementById('dpdpForm');
+function updateProgress(){
+ let answered=0;
+ form.querySelectorAll('[name$="_response"]').forEach(x=>{if(x.value.trim()) answered++;});
+ document.getElementById('progress').textContent=answered+' / 110 answered';
+}
+form.addEventListener('input',updateProgress); form.addEventListener('change',updateProgress);
+function serialize(){
+ const data={org:org.value,contact:contact.value,assessor:assessor.value,date:date.value,fields:{}};
+ form.querySelectorAll('textarea,select').forEach(x=>data.fields[x.name]=x.value);
+ document.querySelectorAll('.declaration-section input').forEach(x=>data.fields[x.name]=x.value);
+ data.fields['legal_ack']=document.getElementById('legalAck').checked; return data;
+}
+function saveLocal(){localStorage.setItem('cloudlync_dpdp_discovery',JSON.stringify(serialize()));alert('Progress saved in this browser.');}
+function loadLocal(){
+ const raw=localStorage.getItem('cloudlync_dpdp_discovery'); if(!raw) return alert('No saved progress found.');
+ const d=JSON.parse(raw); org.value=d.org||'';contact.value=d.contact||'';assessor.value=d.assessor||'';date.value=d.date||'';
+ Object.entries(d.fields||{}).forEach(([k,v])=>{
+   let el=form.elements[k] || document.querySelector('[name="'+k+'"]');
+   if(el){ if(el.type==='checkbox') el.checked=!!v; else el.value=v; }
+ });updateProgress();
+}
+function clearForm(){if(confirm('Clear all entered responses?')){form.reset();document.querySelectorAll('.declaration-section input').forEach(x=>x.value='');
+ document.getElementById('legalAck').checked=false;org.value='';contact.value='';assessor.value='';date.value='';updateProgress();}}
+
+function excelRows(){
+  const rows=[["S.No","Section","Discovery Question","Customer Response","Evidence / Remarks","Compliance Status"]];
+  document.querySelectorAll(".section[data-section]").forEach(section=>{
+    const sec=section.getAttribute("data-section")||"";
+    section.querySelectorAll(".question-card").forEach(card=>{
+      const num=(card.querySelector(".qnum")?.textContent||"").trim();
+      const question=(card.querySelector(".qtext")?.textContent||"").trim();
+      const response=card.querySelector('[name$="_response"]')?.value||"";
+      const evidence=card.querySelector('[name$="_evidence"]')?.value||"";
+      const status=card.querySelector('[name$="_status"]')?.value||"";
+      rows.push([num,sec,question,response,evidence,status]);
+    });
+  });
+  return rows;
+}
+function exportExcel(){
+  if(typeof XLSX==="undefined"){
+    alert("Excel export library could not be loaded. Please connect to the internet and reopen this HTML file, then try again.");
+    return;
+  }
+  const wb=XLSX.utils.book_new();
+  const meta=[
+    ["DPDPA Customer Discovery & Readiness Questionnaire"],
+    ["Organization",document.getElementById("org").value||""],
+    ["Primary Contact",document.getElementById("contact").value||""],
+    ["Assessor / Consultant",document.getElementById("assessor").value||""],
+    ["Assessment Date",document.getElementById("date").value||""],
+    [],
+  ];
+  const data=meta.concat(excelRows());
+  const ws=XLSX.utils.aoa_to_sheet(data);
+  ws["!cols"]=[{wch:8},{wch:38},{wch:85},{wch:28},{wch:45},{wch:24}];
+  XLSX.utils.book_append_sheet(wb,ws,"DPDPA Discovery");
+
+  const decl=[
+    ["Customer Declaration"],
+    ["Organization Name",document.querySelector('[name="decl_org"]')?.value||""],
+    ["Authorized Representative",document.querySelector('[name="decl_rep"]')?.value||""],
+    ["Designation",document.querySelector('[name="decl_designation"]')?.value||""],
+    ["Date",document.querySelector('[name="decl_date"]')?.value||""],
+    ["Declaration Acknowledged",document.getElementById("legalAck")?.checked?"Yes":"No"],
+    [],
+    ["Disclaimer"],
+    ["This workbook was generated from the Cloudlync DPDPA Customer Discovery & Readiness Questionnaire. Completion or assessment does not by itself constitute legal advice, legal certification, regulatory approval, or a guarantee of compliance."]
+  ];
+  const ws2=XLSX.utils.aoa_to_sheet(decl);
+  ws2["!cols"]=[{wch:32},{wch:100}];
+  XLSX.utils.book_append_sheet(wb,ws2,"Declaration");
+
+  const orgName=(document.getElementById("org").value||"Customer").replace(/[^a-z0-9_-]+/gi,"_");
+  XLSX.writeFile(wb,orgName+"_DPDPA_Discovery_Assessment.xlsx");
+}
+function emailFile(){
+  document.getElementById("emailModal").classList.add("open");
+}
+function closeEmailModal(){
+  document.getElementById("emailModal").classList.remove("open");
+}
+function openEmail(){
+  const orgName=document.getElementById("org").value||"Customer";
+  const subject=encodeURIComponent("DPDPA Discovery Assessment - "+orgName);
+  const body=encodeURIComponent(
+    "Dear Perumal,\n\nPlease find attached the completed DPDPA Customer Discovery & Readiness Questionnaire for "+orgName+".\n\nRegards"
+  );
+  window.location.href="mailto:perumal@cloudlyncsol.com?subject="+subject+"&body="+body;
+}
+
+</script>
+</body></html>
